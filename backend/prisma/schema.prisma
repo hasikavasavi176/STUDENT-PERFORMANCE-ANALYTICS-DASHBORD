@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int      @id @default(autoincrement())
+  email         String   @unique
+  password_hash String
+  role          Role
+  created_at    DateTime @default(now())
+  updated_at    DateTime @updatedAt
+
+  // Relations
+  faculty_assignments FacultyAssignment[]
+
+  @@map("users")
+}
+
+model Student {
+  id              Int      @id @default(autoincrement())
+  roll_number     String   @unique
+  name            String
+  branch          String
+  section         String
+  email           String   @unique
+  semester_1_sgpa Float?
+  semester_2_sgpa Float?
+  cgpa            Float?
+  created_at      DateTime @default(now())
+  updated_at      DateTime @updatedAt
+
+  // Relations
+  academic_sessions AcademicSession[]
+
+  @@map("students")
+}
+
+model FacultyAssignment {
+  id             Int      @id @default(autoincrement())
+  faculty_id     Int
+  branch         String
+  section        String
+  academic_year  String
+  created_at     DateTime @default(now())
+  updated_at     DateTime @updatedAt
+
+  // Relations
+  faculty User @relation(fields: [faculty_id], references: [id], onDelete: Cascade)
+
+  @@unique([faculty_id, branch, section, academic_year])
+  @@map("faculty_assignments")
+}
+
+model AcademicSession {
+  id                  Int      @id @default(autoincrement())
+  student_id          Int
+  semester            Int
+  sgpa                Float?
+  credits_completed   Int      @default(0)
+  academic_year       String
+  created_at          DateTime @default(now())
+
+  // Relations
+  student Student @relation(fields: [student_id], references: [id], onDelete: Cascade)
+
+  @@unique([student_id, semester, academic_year])
+  @@map("academic_sessions")
+}
+
+enum Role {
+  admin
+  faculty
+  student
+}
